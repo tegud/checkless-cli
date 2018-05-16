@@ -1,0 +1,31 @@
+{
+  "name": "checkless-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run lint && npm run jest",
+    "lint": "eslint index.js lib/**/*.js",
+    "jest": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tegud/checkless-cli.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tegud/checkless-cli/issues"
+  },
+  "homepage": "https://github.com/tegud/checkless-cli#readme",
+  "dependencies": {
+    "commander": "^2.15.1",
+    "js-yaml": "^3.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.11.0",
+    "jest": "^22.4.3"
+  }
+}
