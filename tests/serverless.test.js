@@ -2,7 +2,7 @@ const { expandToServerlessConfig } = require("../lib/serverless");
 
 describe("expand to serverless config", () => {
     it("sets basic configuration for single region check", async () => {
-        expect(await expandToServerlessConfig({
+        expect(expandToServerlessConfig({
             checks: {
                 localhost: {
                     url: "http://localhost/",
@@ -10,6 +10,7 @@ describe("expand to serverless config", () => {
                 },
             },
         })).toEqual({
+            service: "checkless",
             custom: {
                 checkCompleteTopic: "check-complete",
                 checkFailedTopic: "check-failed",
@@ -42,15 +43,6 @@ describe("expand to serverless config", () => {
                         { sns: "${self:custom.requestCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
                     ],
                 },
-                "send-to-slack": {
-                    handler: "send-to-slack.sendToSlack",
-                    environment: {
-                        webhookUrl: undefined,
-                    },
-                    events: [
-                        { sns: "${self:custom.checkCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
-                    ],
-                },
             },
             provider: {
                 iamRoleStatements: [
@@ -63,24 +55,32 @@ describe("expand to serverless config", () => {
                 name: "aws",
                 runtime: "nodejs8.10",
             },
-            resources: {
-                Resources: {
-                    MailQueue: {
-                        Properties: {
-                            DisplayName: "Checkless",
-                            Subscription: [
-                                {
-                                    Endpoint: undefined,
-                                    Protocol: "email",
-                                },
-                            ],
-                            TopicName: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
-                        },
-                        Type: "AWS::SNS::Topic",
-                    },
+        });
+    });
+
+    it("includes send to slack function if slack set as global notifier", async () => {
+        expect(expandToServerlessConfig({
+            checks: {
+                localhost: {
+                    url: "http://localhost/",
+                    regions: ["eu-west-1"],
                 },
             },
-            service: "checkless",
+            notifications: [
+                {
+                    slack: {
+                        webhookUrl: "https://slackwebhookurl.com/go",
+                    },
+                },
+            ],
+        }).functions["send-to-slack"]).toEqual({
+            handler: "send-to-slack.sendToSlack",
+            environment: {
+                webhookUrl: "https://slackwebhookurl.com/go",
+            },
+            events: [
+                { sns: "${self:custom.checkCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
+            ],
         });
     });
 });
