@@ -3,6 +3,7 @@ const { expandToServerlessConfig } = require("../lib/serverless");
 describe("expand to serverless config", () => {
     it("sets basic configuration for single region check", async () => {
         expect(expandToServerlessConfig({
+            region: "eu-west-1",
             checks: {
                 localhost: {
                     url: "http://localhost/",
@@ -11,13 +12,26 @@ describe("expand to serverless config", () => {
             },
         })).toEqual({
             service: "checkless",
+            provider: {
+                iamRoleStatements: [
+                    {
+                        Action: ["sns:*"],
+                        Effect: "Allow",
+                        Resource: "*",
+                    },
+                ],
+                name: "aws",
+                runtime: "nodejs8.10",
+                region: "eu-west-1",
+            },
             custom: {
-                checkCompleteTopic: "check-complete",
-                checkFailedTopic: "check-failed",
-                requestCompleteTopic: "site-check-complete",
+                checkCompleteTopic: "checkless-check-complete",
+                checkFailedTopic: "checkless-check-failed",
+                requestCompleteTopic: "checkless-site-check-complete",
             },
             functions: {
                 "make-request": {
+                    handler: "make-request.makeRequest",
                     events: [
                         {
                             schedule: {
@@ -30,7 +44,6 @@ describe("expand to serverless config", () => {
                             },
                         },
                     ],
-                    handler: "make-request",
                 },
                 "handle-request": {
                     handler: "handle-request.handleRequest",
@@ -43,17 +56,6 @@ describe("expand to serverless config", () => {
                         { sns: "${self:custom.requestCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
                     ],
                 },
-            },
-            provider: {
-                iamRoleStatements: [
-                    {
-                        Action: ["sns:*"],
-                        Effect: "Allow",
-                        Resource: "*",
-                    },
-                ],
-                name: "aws",
-                runtime: "nodejs8.10",
             },
         });
     });
@@ -81,6 +83,60 @@ describe("expand to serverless config", () => {
             events: [
                 { sns: "${self:custom.checkCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
             ],
+        });
+    });
+
+    describe("check schedule", () => {
+        it("set to configured value", async () => {
+            expect(expandToServerlessConfig({
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        checkEvery: "1 minute",
+                        regions: ["eu-west-1"],
+                    },
+                },
+                notifications: [
+                    {
+                        slack: {
+                            webhookUrl: "https://slackwebhookurl.com/go",
+                        },
+                    },
+                ],
+            }).functions["make-request"].events[0].schedule.rate).toBe("rate(1 minute)");
+        });
+
+        it("defaults to 5minutes", async () => {
+            expect(expandToServerlessConfig({
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["eu-west-1"],
+                    },
+                },
+                notifications: [
+                    {
+                        slack: {
+                            webhookUrl: "https://slackwebhookurl.com/go",
+                        },
+                    },
+                ],
+            }).functions["make-request"].events[0].schedule.rate).toBe("rate(5 minutes)");
+        });
+    });
+
+    describe("service name", () => {
+        it("sets service property", () => {
+            expect(expandToServerlessConfig({
+                service: "my-service",
+                region: "eu-west-1",
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["eu-west-1"],
+                    },
+                },
+            }).service).toBe("my-service");
         });
     });
 });

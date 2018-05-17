@@ -62,3 +62,4 @@ typings/
 
 checkless.yml
 serverless.yml
+.serverless/
