@@ -138,5 +138,22 @@ describe("expand to serverless config", () => {
                 },
             }).service).toBe("my-service");
         });
+
+        it("sets prefixes SNS topic names", () => {
+            expect(expandToServerlessConfig({
+                service: "my-service",
+                region: "eu-west-1",
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["eu-west-1"],
+                    },
+                },
+            }).custom).toEqual({
+                requestCompleteTopic: "my-service-site-check-complete",
+                checkCompleteTopic: "my-service-check-complete",
+                checkFailedTopic: "my-service-check-failed",
+            });
+        });
     });
 });
