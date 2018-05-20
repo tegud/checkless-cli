@@ -1,12 +1,15 @@
 {
   "name": "checkless-cli",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "npm run lint && npm run jest",
     "lint": "eslint index.js lib/**/*.js",
     "jest": "jest"
+  },
+  "bin": {
+    "checkless": "./bin/checkless"
   },
   "repository": {
     "type": "git",
@@ -20,7 +23,8 @@
   "homepage": "https://github.com/tegud/checkless-cli#readme",
   "dependencies": {
     "commander": "^2.15.1",
-    "js-yaml": "^3.11.0"
+    "js-yaml": "^3.11.0",
+    "signale": "^1.0.1"
   },
   "devDependencies": {
     "eslint": "^4.19.1",

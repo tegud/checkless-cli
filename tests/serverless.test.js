@@ -31,7 +31,7 @@ describe("expand to serverless config", () => {
             },
             functions: {
                 "make-request": {
-                    handler: "make-request.makeRequest",
+                    handler: "node_modules/checkless/make-request.makeRequest",
                     events: [
                         {
                             schedule: {
@@ -46,7 +46,7 @@ describe("expand to serverless config", () => {
                     ],
                 },
                 "handle-request": {
-                    handler: "handle-request.handleRequest",
+                    handler: "node_modules/checkless/handle-request.handleRequest",
                     environment: {
                         completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                         failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
@@ -76,7 +76,7 @@ describe("expand to serverless config", () => {
                 },
             ],
         }).functions["send-to-slack"]).toEqual({
-            handler: "send-to-slack.sendToSlack",
+            handler: "node_modules/checkless/send-to-slack.sendToSlack",
             environment: {
                 webhookUrl: "https://slackwebhookurl.com/go",
             },

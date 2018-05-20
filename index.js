@@ -1,6 +1,7 @@
 const { loadConfig, writeConfig } = require("./lib/config");
 const { expandToServerlessConfig } = require("./lib/serverless");
 
+const signale = require("signale");
 const program = require("commander");
 
 module.exports = () => {
@@ -12,14 +13,14 @@ module.exports = () => {
         .command("generate [file] [outputFile]")
         .description("Generates serverless config for the checkless config")
         .action(async (file = "checkless.yml", outputFile = "serverless.yml") => {
-            console.log(`Loading config from ${file}`);
+            signale.info(`Loading config from ${file}`);
 
             const config = await loadConfig(`${process.cwd()}/${file}`);
             const serverlessConfig = expandToServerlessConfig(config);
 
             await writeConfig(serverlessConfig, `${process.cwd()}/${outputFile}`);
 
-            console.log(`Serverless config written to: ${outputFile}`);
+            signale.success(`Serverless config written to: ${outputFile}`);
         });
 
     program.parse(process.argv);
