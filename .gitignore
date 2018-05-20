@@ -60,6 +60,6 @@ typings/
 # next.js build output
 .next
 
-checkless.yml
+.checkless/
 serverless.yml
 .serverless/
