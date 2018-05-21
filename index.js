@@ -31,8 +31,6 @@ const createServerlessDeploy = async (region, outputFile, config) => {
     const rootDirectory = `${process.cwd()}/.checkless`;
     const directory = `${rootDirectory}/${region}`;
 
-    await createFolderIfNeeded(rootDirectory);
-
     await createFolderIfNeeded(directory);
 
     await copyNodeModulesToRegionDirectory(directory);
@@ -62,6 +60,8 @@ module.exports = () => {
             signale.info(`Regions to install to: ${regionConfigs.join(", ")}`);
 
             try {
+                await createFolderIfNeeded(`${process.cwd()}/.checkless`);
+
                 await Promise.all(regionConfigs.map(region => createServerlessDeploy(
                     region,
                     outputFile,

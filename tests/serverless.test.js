@@ -11,50 +11,52 @@ describe("expand to serverless config", () => {
                 },
             },
         })).toEqual({
-            service: "checkless",
-            provider: {
-                iamRoleStatements: [
-                    {
-                        Action: ["sns:*"],
-                        Effect: "Allow",
-                        Resource: "*",
-                    },
-                ],
-                name: "aws",
-                runtime: "nodejs8.10",
-                region: "eu-west-1",
-            },
-            custom: {
-                checkCompleteTopic: "checkless-check-complete",
-                checkFailedTopic: "checkless-check-failed",
-                requestCompleteTopic: "checkless-site-check-complete",
-            },
-            functions: {
-                "make-request": {
-                    handler: "node_modules/checkless/make-request.makeRequest",
-                    events: [
+            "eu-west-1": {
+                service: "checkless",
+                provider: {
+                    iamRoleStatements: [
                         {
-                            schedule: {
-                                rate: "rate(5 minutes)",
-                                input: {
-                                    region: "eu-west-1",
-                                    snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
-                                    url: "http://localhost/",
-                                },
-                            },
+                            Action: ["sns:*"],
+                            Effect: "Allow",
+                            Resource: "*",
                         },
                     ],
+                    name: "aws",
+                    runtime: "nodejs8.10",
+                    region: "eu-west-1",
                 },
-                "handle-request": {
-                    handler: "node_modules/checkless/handle-request.handleRequest",
-                    environment: {
-                        completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
-                        failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
-                        region: "eu-west-1",
+                custom: {
+                    checkCompleteTopic: "checkless-check-complete",
+                    checkFailedTopic: "checkless-check-failed",
+                    requestCompleteTopic: "checkless-site-check-complete",
+                },
+                functions: {
+                    "make-request": {
+                        handler: "node_modules/checkless/make-request.makeRequest",
+                        events: [
+                            {
+                                schedule: {
+                                    rate: "rate(5 minutes)",
+                                    input: {
+                                        homeRegion: "eu-west-1",
+                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                                        url: "http://localhost/",
+                                    },
+                                },
+                            },
+                        ],
                     },
-                    events: [
-                        { sns: "${self:custom.requestCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
-                    ],
+                    "handle-request": {
+                        handler: "node_modules/checkless/handle-request.handleRequest",
+                        environment: {
+                            completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                            failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
+                            region: "eu-west-1",
+                        },
+                        events: [
+                            { sns: "${self:custom.requestCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
+                        ],
+                    },
                 },
             },
         });
@@ -75,7 +77,7 @@ describe("expand to serverless config", () => {
                     },
                 },
             ],
-        }).functions["send-to-slack"]).toEqual({
+        })["eu-west-1"].functions["send-to-slack"]).toEqual({
             handler: "node_modules/checkless/send-to-slack.sendToSlack",
             environment: {
                 webhookUrl: "https://slackwebhookurl.com/go",
@@ -103,7 +105,7 @@ describe("expand to serverless config", () => {
                         },
                     },
                 ],
-            }).functions["make-request"].events[0].schedule.rate).toBe("rate(1 minute)");
+            })["eu-west-1"].functions["make-request"].events[0].schedule.rate).toBe("rate(1 minute)");
         });
 
         it("defaults to 5minutes", async () => {
@@ -121,7 +123,7 @@ describe("expand to serverless config", () => {
                         },
                     },
                 ],
-            }).functions["make-request"].events[0].schedule.rate).toBe("rate(5 minutes)");
+            })["eu-west-1"].functions["make-request"].events[0].schedule.rate).toBe("rate(5 minutes)");
         });
     });
 
@@ -136,7 +138,7 @@ describe("expand to serverless config", () => {
                         regions: ["eu-west-1"],
                     },
                 },
-            }).service).toBe("my-service");
+            })["eu-west-1"].service).toBe("my-service");
         });
 
         it("sets prefixes SNS topic names", () => {
@@ -149,10 +151,64 @@ describe("expand to serverless config", () => {
                         regions: ["eu-west-1"],
                     },
                 },
-            }).custom).toEqual({
+            })["eu-west-1"].custom).toEqual({
                 requestCompleteTopic: "my-service-site-check-complete",
                 checkCompleteTopic: "my-service-check-complete",
                 checkFailedTopic: "my-service-check-failed",
+            });
+        });
+    });
+
+    describe("multiple regions", () => {
+        it("includes check function in us-east-1", () => {
+            expect(expandToServerlessConfig({
+                region: "eu-west-1",
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["us-east-1"],
+                    },
+                    localhost2: {
+                        url: "http://localhost:8080/",
+                        regions: ["eu-west-1"],
+                    },
+                },
+            })["us-east-1"]).toEqual({
+                service: "checkless",
+                provider: {
+                    iamRoleStatements: [
+                        {
+                            Action: ["sns:*"],
+                            Effect: "Allow",
+                            Resource: "*",
+                        },
+                    ],
+                    name: "aws",
+                    runtime: "nodejs8.10",
+                    region: "us-east-1",
+                },
+                custom: {
+                    checkCompleteTopic: "checkless-check-complete",
+                    checkFailedTopic: "checkless-check-failed",
+                    requestCompleteTopic: "checkless-site-check-complete",
+                },
+                functions: {
+                    "make-request": {
+                        handler: "node_modules/checkless/make-request.makeRequest",
+                        events: [
+                            {
+                                schedule: {
+                                    rate: "rate(5 minutes)",
+                                    input: {
+                                        homeRegion: "eu-west-1",
+                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                                        url: "http://localhost/",
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
             });
         });
     });
