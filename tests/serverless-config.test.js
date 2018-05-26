@@ -1,4 +1,4 @@
-const { expandToServerlessConfig } = require("../lib/serverless");
+const { expandToServerlessConfig } = require("../lib/serverless-config");
 
 describe("expand to serverless config", () => {
     it("sets basic configuration for single region check", async () => {
