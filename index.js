@@ -1,14 +1,16 @@
 const { loadConfig, writeConfig } = require("./lib/config");
 const { expandToServerlessConfig } = require("./lib/serverless-config");
+const { execServerless } = require("./lib/serverless-deploy");
 const { estimate } = require("./lib/estimate-cost");
+const { listRegions } = require("./lib/aws-region-list");
 const { version } = require("./package.json");
 
 const signale = require("signale");
+const inquirer = require("inquirer");
 const program = require("commander");
 const { stat, mkdir, readdir } = require("fs");
 const { copy } = require("fs-extra");
 const { promisify } = require("util");
-const { spawn } = require("child_process");
 
 const promiseStat = promisify(stat);
 const promiseMkDir = promisify(mkdir);
@@ -44,34 +46,6 @@ const createServerlessDeploy = async (region, outputFile, config) => {
 
 const getRegionFolders = async () => promiseReadDir(`${process.cwd()}/.checkless`);
 
-const execServerless = async region => new Promise((resolve, reject) => {
-    const serverless = spawn("serverless", [
-        "deploy",
-    ], {
-        cwd: `${process.cwd()}/.checkless/${region}`,
-    });
-
-    serverless.stdout.on("data", (data) => {
-        console.log(data.toString("utf-8"));
-    });
-
-    serverless.stderr.on("data", (data) => {
-        console.error(data.toString("utf-8"));
-    });
-
-    serverless.on("error", (data) => {
-        console.error(data.toString("utf-8"));
-    });
-
-    serverless.on("close", (code) => {
-        if (code) {
-            reject(new Error(`Serverless exited with code: ${code}`));
-            return;
-        }
-
-        resolve();
-    });
-});
 
 module.exports = () => {
     program
@@ -136,6 +110,48 @@ module.exports = () => {
             }
 
             signale.success(`Checkless deployed to ${regions.length} region${regions.length === 1 ? "" : "s"}`);
+        });
+
+    program
+        .command("init")
+        .description("Initialise Checkless Project")
+        .action(async () => {
+            // const checklessConfigExists = await checklessConfigExists(`${process.cwd}/checkless.yml`);
+
+            signale.info("Create new ");
+
+            const options = await inquirer.prompt([
+                {
+                    type: "input",
+                    name: "name",
+                    message: "Name of the checkless installation",
+                    default: "checkless",
+                },
+                {
+                    type: "list",
+                    name: "region",
+                    message: "Home Region (where the main functions are installed)",
+                    choices: listRegions().map(region => ({ name: region, value: region })),
+                    default: "Europe - Ireland (eu-west-1)",
+                },
+            ]);
+
+            console.log(options);
+
+            const confirmation = await inquirer.prompt([
+                {
+                    type: "bool",
+                    name: "confirm",
+                    message: "Is that correct?",
+                    default: "true",
+                },
+            ]);
+
+            if (!confirmation) {
+                return;
+            }
+
+            signale.success("checkless.yml written!")
         });
 
     program
