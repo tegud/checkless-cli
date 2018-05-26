@@ -118,8 +118,6 @@ module.exports = () => {
         .action(async () => {
             // const checklessConfigExists = await checklessConfigExists(`${process.cwd}/checkless.yml`);
 
-            signale.info("Create new ");
-
             const options = await inquirer.prompt([
                 {
                     type: "input",
@@ -138,6 +136,94 @@ module.exports = () => {
 
             console.log(options);
 
+            let configDone = false;
+            const checks = [];
+
+            while (!configDone) {
+                const { choice } = await inquirer.prompt([ // eslint-disable-line no-await-in-loop
+                    {
+                        type: "list",
+                        name: "choice",
+                        message: "Would you like to add a new check, notification or finish?",
+                        choices: [
+                            { name: "Add Check", value: "check" },
+                            { name: "Add Notification", value: "notification" },
+                            { name: "Done", value: "done" },
+                        ],
+                        default: "Europe - Ireland (eu-west-1)",
+                    },
+                ]);
+
+                if (choice === "done") {
+                    configDone = true;
+                    break;
+                }
+
+                if (choice === "check") {
+                    const newCheck = await inquirer.prompt([ // eslint-disable-line no-await-in-loop
+                        {
+                            type: "input",
+                            name: "name",
+                            message: "Name of the check",
+                            validate: value => (value ? true : "Please enter a check name"),
+                        },
+                        {
+                            type: "input",
+                            name: "url",
+                            message: "URL of the check",
+                            validate: (value) => {
+                                if (value) {
+                                    return true;
+                                }
+
+                                return "Please enter a URL";
+                            },
+                        },
+                        {
+                            type: "list",
+                            name: "checkEvery",
+                            message: "Check Frequency",
+                            choices: [
+                                "30 seconds",
+                                "1 minute",
+                                "90 seconds",
+                                "5 minute",
+                                "10 minute",
+                            ].map(option => ({
+                                key: option,
+                                value: option,
+                            })),
+                            default: "5 minute",
+                        },
+                        {
+                            type: "checkbox",
+                            name: "region",
+                            message: "Select regions to check from",
+                            choices: listRegions().map(region => ({ name: region, value: region })),
+                            default: "Europe - Ireland (eu-west-1)",
+                            validate: (value) => {
+                                if (!value.length) {
+                                    return "Please select at least one region";
+                                }
+
+                                return true;
+                            },
+                        },
+                    ]);
+
+                    checks.push(newCheck);
+                }
+
+                if (choice === "notification") {
+                    signale.info("Add new notification");
+                }
+            }
+
+            console.log({
+                ...options,
+                checks,
+            });
+
             const confirmation = await inquirer.prompt([
                 {
                     type: "bool",
@@ -151,7 +237,7 @@ module.exports = () => {
                 return;
             }
 
-            signale.success("checkless.yml written!")
+            signale.success("checkless.yml written!");
         });
 
     program
