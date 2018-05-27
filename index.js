@@ -2,11 +2,10 @@ const { loadConfig, writeConfig } = require("./lib/config");
 const { expandToServerlessConfig } = require("./lib/serverless-config");
 const { execServerless } = require("./lib/serverless-deploy");
 const { estimate } = require("./lib/estimate-cost");
-const { listRegions } = require("./lib/aws-region-list");
+const { newProjectSetup } = require("./lib/init");
 const { version } = require("./package.json");
 
 const signale = require("signale");
-const inquirer = require("inquirer");
 const program = require("commander");
 const { stat, mkdir, readdir } = require("fs");
 const { copy } = require("fs-extra");
@@ -112,130 +111,25 @@ module.exports = () => {
             signale.success(`Checkless deployed to ${regions.length} region${regions.length === 1 ? "" : "s"}`);
         });
 
+    const checklessConfigExists = async file => promiseStat(file)
+        .then(() => Promise.resolve(true))
+        .catch(() => Promise.resolve(false));
+
     program
         .command("init")
         .description("Initialise Checkless Project")
         .action(async () => {
-            // const checklessConfigExists = await checklessConfigExists(`${process.cwd}/checkless.yml`);
+            const configFile = `${process.cwd()}/checkless.yml`;
+            const alreadyExists = await checklessConfigExists(configFile);
 
-            const options = await inquirer.prompt([
-                {
-                    type: "input",
-                    name: "name",
-                    message: "Name of the checkless installation",
-                    default: "checkless",
-                },
-                {
-                    type: "list",
-                    name: "region",
-                    message: "Home Region (where the main functions are installed)",
-                    choices: listRegions().map(region => ({ name: region, value: region })),
-                    default: "Europe - Ireland (eu-west-1)",
-                },
-            ]);
-
-            console.log(options);
-
-            let configDone = false;
-            const checks = [];
-
-            while (!configDone) {
-                const { choice } = await inquirer.prompt([ // eslint-disable-line no-await-in-loop
-                    {
-                        type: "list",
-                        name: "choice",
-                        message: "Would you like to add a new check, notification or finish?",
-                        choices: [
-                            { name: "Add Check", value: "check" },
-                            { name: "Add Notification", value: "notification" },
-                            { name: "Done", value: "done" },
-                        ],
-                        default: "Europe - Ireland (eu-west-1)",
-                    },
-                ]);
-
-                if (choice === "done") {
-                    configDone = true;
-                    break;
-                }
-
-                if (choice === "check") {
-                    const newCheck = await inquirer.prompt([ // eslint-disable-line no-await-in-loop
-                        {
-                            type: "input",
-                            name: "name",
-                            message: "Name of the check",
-                            validate: value => (value ? true : "Please enter a check name"),
-                        },
-                        {
-                            type: "input",
-                            name: "url",
-                            message: "URL of the check",
-                            validate: (value) => {
-                                if (value) {
-                                    return true;
-                                }
-
-                                return "Please enter a URL";
-                            },
-                        },
-                        {
-                            type: "list",
-                            name: "checkEvery",
-                            message: "Check Frequency",
-                            choices: [
-                                "30 seconds",
-                                "1 minute",
-                                "90 seconds",
-                                "5 minute",
-                                "10 minute",
-                            ].map(option => ({
-                                key: option,
-                                value: option,
-                            })),
-                            default: "5 minute",
-                        },
-                        {
-                            type: "checkbox",
-                            name: "region",
-                            message: "Select regions to check from",
-                            choices: listRegions().map(region => ({ name: region, value: region })),
-                            default: "Europe - Ireland (eu-west-1)",
-                            validate: (value) => {
-                                if (!value.length) {
-                                    return "Please select at least one region";
-                                }
-
-                                return true;
-                            },
-                        },
-                    ]);
-
-                    checks.push(newCheck);
-                }
-
-                if (choice === "notification") {
-                    signale.info("Add new notification");
-                }
-            }
-
-            console.log({
-                ...options,
-                checks,
-            });
-
-            const confirmation = await inquirer.prompt([
-                {
-                    type: "bool",
-                    name: "confirm",
-                    message: "Is that correct?",
-                    default: "true",
-                },
-            ]);
-
-            if (!confirmation) {
+            if (alreadyExists) {
+                signale.error("checkless.yml file already exists");
                 return;
             }
+
+            const config = await newProjectSetup();
+
+            await writeConfig(config, configFile);
 
             signale.success("checkless.yml written!");
         });
