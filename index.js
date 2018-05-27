@@ -119,6 +119,8 @@ module.exports = () => {
         .command("init")
         .description("Initialise Checkless Project")
         .action(async () => {
+            signale.success("Initiating Checkless Project Tutorial...");
+
             const configFile = `${process.cwd()}/checkless.yml`;
             const alreadyExists = await checklessConfigExists(configFile);
 
