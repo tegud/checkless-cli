@@ -33,6 +33,7 @@ describe("expand to serverless config", () => {
                 functions: {
                     "make-request": {
                         handler: "node_modules/checkless/make-request.makeRequest",
+                        memorySize: 512,
                         events: [
                             {
                                 schedule: {
@@ -48,6 +49,7 @@ describe("expand to serverless config", () => {
                     },
                     "handle-request": {
                         handler: "node_modules/checkless/handle-request.handleRequest",
+                        memorySize: 256,
                         environment: {
                             completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                             failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
@@ -79,6 +81,7 @@ describe("expand to serverless config", () => {
             ],
         })["eu-west-1"].functions["send-to-slack"]).toEqual({
             handler: "node_modules/checkless/send-to-slack.sendToSlack",
+            memorySize: 512,
             environment: {
                 webhookUrl: "https://slackwebhookurl.com/go",
             },
@@ -195,6 +198,7 @@ describe("expand to serverless config", () => {
                 functions: {
                     "make-request": {
                         handler: "node_modules/checkless/make-request.makeRequest",
+                        memorySize: 512,
                         events: [
                             {
                                 schedule: {
