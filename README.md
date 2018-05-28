@@ -29,6 +29,8 @@ Depending on notification configuration, other pre-requisites may be required.
 
 ### Configuration
 
+`checkless cli init` will walk you through setting up a basic checkless.cli file, including setting region, adding checks and notifications. Alternatively you can create your own chheckless.yml file. For a full example this [exampple Checkless Config repository](https://www.github.com/tegud/checkless-tegud)
+
 checkless-cli reads configuration from a local checkless.yml file, for example:
 
 ```
