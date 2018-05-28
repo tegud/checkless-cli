@@ -8,7 +8,7 @@ const { version } = require("./package.json");
 const signale = require("signale");
 const program = require("commander");
 const { stat, mkdir, readdir } = require("fs");
-const { copy } = require("fs-extra");
+const { ensureSymlink } = require("fs-extra");
 const { promisify } = require("util");
 
 const promiseStat = promisify(stat);
@@ -26,10 +26,10 @@ const createFolderIfNeeded = async (directory) => {
     return promiseMkDir(directory);
 };
 
-const copyNodeModulesToRegionDirectory = async (directory) => {
-    signale.info(`Copying node_modules to: ${directory}`);
+const linkNodeModulesToRegionDirectpry = async (directory) => {
+    signale.info(`Linking node_modules to: ${directory}`);
 
-    return copy(`${process.cwd()}/node_modules`, `${directory}/node_modules`);
+    return ensureSymlink(`${process.cwd()}/node_modules`, `${directory}/node_modules`);
 };
 
 const createServerlessDeploy = async (region, outputFile, config) => {
@@ -38,7 +38,7 @@ const createServerlessDeploy = async (region, outputFile, config) => {
 
     await createFolderIfNeeded(directory);
 
-    await copyNodeModulesToRegionDirectory(directory);
+    await linkNodeModulesToRegionDirectpry(directory);
 
     await writeConfig(config, `${directory}/${outputFile}`);
 };
@@ -78,7 +78,7 @@ module.exports = () => {
                 )));
             } catch (error) {
                 signale.error("Error writing serverless config", error);
-                return;
+                process.exit(1);
             }
 
             signale.success("Serverless configs written");
