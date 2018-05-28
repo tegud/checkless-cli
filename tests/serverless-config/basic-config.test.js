@@ -1,4 +1,4 @@
-const { expandToServerlessConfig } = require("../lib/serverless-config");
+const { expandToServerlessConfig } = require("../../lib/serverless-config");
 
 describe("expand to serverless config", () => {
     it("sets basic configuration for single region check", async () => {
@@ -28,6 +28,7 @@ describe("expand to serverless config", () => {
                 custom: {
                     checkCompleteTopic: "checkless-check-complete",
                     checkFailedTopic: "checkless-check-failed",
+                    checkSucceededTopic: "checkless-check-succeeded",
                     requestCompleteTopic: "checkless-site-check-complete",
                 },
                 functions: {
@@ -53,6 +54,7 @@ describe("expand to serverless config", () => {
                         environment: {
                             completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                             failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
+                            succeededSnsTopic: "${self:custom.checkSucceededTopic}", // eslint-disable-line no-template-curly-in-string
                             region: "eu-west-1",
                         },
                         events: [
@@ -64,30 +66,68 @@ describe("expand to serverless config", () => {
         });
     });
 
-    it("includes send to slack function if slack set as global notifier", async () => {
+    it("sets basic configuration for us-east-1", async () => {
         expect(expandToServerlessConfig({
+            region: "us-east-1",
             checks: {
                 localhost: {
                     url: "http://localhost/",
-                    regions: ["eu-west-1"],
+                    regions: ["us-east-1"],
                 },
             },
-            notifications: [
-                {
-                    slack: {
-                        webhookUrl: "https://slackwebhookurl.com/go",
+        })).toEqual({
+            "us-east-1": {
+                service: "checkless",
+                provider: {
+                    iamRoleStatements: [
+                        {
+                            Action: ["sns:*"],
+                            Effect: "Allow",
+                            Resource: "*",
+                        },
+                    ],
+                    name: "aws",
+                    runtime: "nodejs8.10",
+                    region: "us-east-1",
+                },
+                custom: {
+                    checkCompleteTopic: "checkless-check-complete",
+                    checkFailedTopic: "checkless-check-failed",
+                    checkSucceededTopic: "checkless-check-succeeded",
+                    requestCompleteTopic: "checkless-site-check-complete",
+                },
+                functions: {
+                    "make-request": {
+                        handler: "node_modules/checkless/make-request.makeRequest",
+                        memorySize: 512,
+                        events: [
+                            {
+                                schedule: {
+                                    rate: "rate(5 minutes)",
+                                    input: {
+                                        homeRegion: "us-east-1",
+                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                                        url: "http://localhost/",
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    "handle-request": {
+                        handler: "node_modules/checkless/handle-request.handleRequest",
+                        memorySize: 256,
+                        environment: {
+                            completeSnsTopic: "${self:custom.checkCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                            failedSnsTopic: "${self:custom.checkFailedTopic}", // eslint-disable-line no-template-curly-in-string
+                            succeededSnsTopic: "${self:custom.checkSucceededTopic}", // eslint-disable-line no-template-curly-in-string
+                            region: "us-east-1",
+                        },
+                        events: [
+                            { sns: "${self:custom.requestCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
+                        ],
                     },
                 },
-            ],
-        })["eu-west-1"].functions["send-to-slack"]).toEqual({
-            handler: "node_modules/checkless/send-to-slack.sendToSlack",
-            memorySize: 512,
-            environment: {
-                webhookUrl: "https://slackwebhookurl.com/go",
             },
-            events: [
-                { sns: "${self:custom.checkCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
-            ],
         });
     });
 
@@ -157,6 +197,7 @@ describe("expand to serverless config", () => {
             })["eu-west-1"].custom).toEqual({
                 requestCompleteTopic: "my-service-site-check-complete",
                 checkCompleteTopic: "my-service-check-complete",
+                checkSucceededTopic: "my-service-check-succeeded",
                 checkFailedTopic: "my-service-check-failed",
             });
         });
@@ -193,6 +234,7 @@ describe("expand to serverless config", () => {
                 custom: {
                     checkCompleteTopic: "checkless-check-complete",
                     checkFailedTopic: "checkless-check-failed",
+                    checkSucceededTopic: "checkless-check-succeeded",
                     requestCompleteTopic: "checkless-site-check-complete",
                 },
                 functions: {
