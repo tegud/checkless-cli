@@ -15,7 +15,7 @@ The tool is designed to be used both during local development, but also as part 
 - Node 8.10 or above
 
 ### Deployment Only: 
-- Linux or WLS (Windows Linux Subsystem) for deployment (generate and estimate work cross-platform) 
+- Linux or WSL (Windows Subsystem for Linux) for deployment (generate and estimate work cross-platform) 
 - AWS Account and service account with enough permissions to run Serverless (basically most of them)
 - Serverless installed globally (`npm i -g serverless`)
 
