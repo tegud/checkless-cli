@@ -203,6 +203,27 @@ describe("expand to serverless config", () => {
         });
     });
 
+    describe("check expectations", () => {
+        it("sets statusCode property", () => {
+            expect(expandToServerlessConfig({
+                service: "my-service",
+                region: "eu-west-1",
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["eu-west-1"],
+                        expect: { statusCode: 201 },
+                    },
+                },
+            })["eu-west-1"].functions["make-request"].events[0].schedule.input).toEqual({
+                homeRegion: "eu-west-1",
+                snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                url: "http://localhost/",
+                statusCode: 201,
+            });
+        });
+    });
+
     describe("multiple regions", () => {
         it("includes check function in us-east-1", () => {
             expect(expandToServerlessConfig({
