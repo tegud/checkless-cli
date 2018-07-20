@@ -67,4 +67,31 @@ describe("expand to serverless config", () => {
                 ],
             }));
     });
+
+    describe("email notification", () => {
+        it.only("Sends to mailqueue on sucess", async () =>
+            expect(expandToServerlessConfig({
+                checks: {},
+                notifications: [
+                    {
+                        email: {
+                            sendOn: "success",
+                            sendTo: "address@example.com",
+                        },
+                    },
+                ],
+            })["eu-west-1"].resources.Resources.MailQueue).toEqual({
+                Type: "AWS::SNS::Topic",
+                Properties: {
+                    DisplayName: "Checkless",
+                    TopicName: "${self:custom.checkSucceededTopic}", // eslint-disable-line no-template-curly-in-string
+                    Subscription: [
+                        {
+                            Endpoint: "address@example.com",
+                            Protocol: "email",
+                        },
+                    ],
+                },
+            }));
+    });
 });
