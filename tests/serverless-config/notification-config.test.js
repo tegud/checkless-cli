@@ -69,7 +69,7 @@ describe("expand to serverless config", () => {
     });
 
     describe("email notification", () => {
-        it.only("Sends to mailqueue on sucess", async () =>
+        it("Sends to mailqueue on sucess", async () =>
             expect(expandToServerlessConfig({
                 checks: {},
                 notifications: [
