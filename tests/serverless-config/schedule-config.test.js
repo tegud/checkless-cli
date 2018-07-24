@@ -26,6 +26,7 @@ describe("expand to serverless config", () => {
                     region: "eu-west-1",
                 },
                 custom: {
+                    makeRequestTopic: "checkless-make-request",
                     checkCompleteTopic: "checkless-check-complete",
                     checkFailedTopic: "checkless-check-failed",
                     checkSucceededTopic: "checkless-check-succeeded",
@@ -35,13 +36,15 @@ describe("expand to serverless config", () => {
                     "make-request": {
                         handler: "node_modules/checkless/make-request.makeRequest",
                         memorySize: 512,
+                        environment: {
+                            homeRegion: "eu-west-1",
+                            handleRequestTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                        },
                         events: [
                             {
                                 schedule: {
                                     rate: "rate(5 minutes)",
                                     input: {
-                                        homeRegion: "eu-west-1",
-                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                                         url: "http://localhost/",
                                     },
                                 },
@@ -91,6 +94,7 @@ describe("expand to serverless config", () => {
                     region: "us-east-1",
                 },
                 custom: {
+                    makeRequestTopic: "checkless-make-request",
                     checkCompleteTopic: "checkless-check-complete",
                     checkFailedTopic: "checkless-check-failed",
                     checkSucceededTopic: "checkless-check-succeeded",
@@ -100,13 +104,15 @@ describe("expand to serverless config", () => {
                     "make-request": {
                         handler: "node_modules/checkless/make-request.makeRequest",
                         memorySize: 512,
+                        environment: {
+                            homeRegion: "us-east-1",
+                            handleRequestTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                        },
                         events: [
                             {
                                 schedule: {
                                     rate: "rate(5 minutes)",
                                     input: {
-                                        homeRegion: "us-east-1",
-                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                                         url: "http://localhost/",
                                     },
                                 },
@@ -195,6 +201,7 @@ describe("expand to serverless config", () => {
                     },
                 },
             })["eu-west-1"].custom).toEqual({
+                makeRequestTopic: "my-service-make-request",
                 requestCompleteTopic: "my-service-site-check-complete",
                 checkCompleteTopic: "my-service-check-complete",
                 checkSucceededTopic: "my-service-check-succeeded",
@@ -216,8 +223,6 @@ describe("expand to serverless config", () => {
                     },
                 },
             })["eu-west-1"].functions["make-request"].events[0].schedule.input).toEqual({
-                homeRegion: "eu-west-1",
-                snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                 url: "http://localhost/",
                 statusCode: 201,
             });
@@ -253,6 +258,7 @@ describe("expand to serverless config", () => {
                     region: "us-east-1",
                 },
                 custom: {
+                    makeRequestTopic: "checkless-make-request",
                     checkCompleteTopic: "checkless-check-complete",
                     checkFailedTopic: "checkless-check-failed",
                     checkSucceededTopic: "checkless-check-succeeded",
@@ -262,13 +268,15 @@ describe("expand to serverless config", () => {
                     "make-request": {
                         handler: "node_modules/checkless/make-request.makeRequest",
                         memorySize: 512,
+                        environment: {
+                            homeRegion: "eu-west-1",
+                            handleRequestTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
+                        },
                         events: [
                             {
                                 schedule: {
                                     rate: "rate(5 minutes)",
                                     input: {
-                                        homeRegion: "eu-west-1",
-                                        snsTopic: "${self:custom.requestCompleteTopic}", // eslint-disable-line no-template-curly-in-string
                                         url: "http://localhost/",
                                     },
                                 },
