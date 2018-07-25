@@ -16,10 +16,26 @@ describe("httpEnabled", () => {
                         path: "check",
                         method: "post",
                         cors: true,
+                        private: true,
                     },
                 },
             ],
         });
+    });
+
+    it("sets api keys on aws provider config when service specified", async () => {
+        expect(expandToServerlessConfig({
+            service: "my-checkless",
+            region: "eu-west-1",
+            httpEnabled: true,
+        })["eu-west-1"].provider.apiKeys).toEqual(["my-checkless"]);
+    });
+
+    it("sets api keys on aws provider config when service not specified", async () => {
+        expect(expandToServerlessConfig({
+            region: "eu-west-1",
+            httpEnabled: true,
+        })["eu-west-1"].provider.apiKeys).toEqual(["checkless"]);
     });
 
     it("sets make-request to trigger on SNS topic", async () => {
