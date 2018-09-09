@@ -176,6 +176,27 @@ describe("expand to serverless config", () => {
         });
     });
 
+    describe("follow redirect", () => {
+        it("set to configured value", async () => {
+            expect(expandToServerlessConfig({
+                checks: {
+                    localhost: {
+                        url: "http://localhost/",
+                        regions: ["eu-west-1"],
+                        followRedirect: false,
+                    },
+                },
+                notifications: [
+                    {
+                        slack: {
+                            webhookUrl: "https://slackwebhookurl.com/go",
+                        },
+                    },
+                ],
+            })["eu-west-1"].functions["make-request"].events[0].schedule.input.followRedirect).toBe(false);
+        });
+    });
+
     describe("service name", () => {
         it("sets service property", () => {
             expect(expandToServerlessConfig({
