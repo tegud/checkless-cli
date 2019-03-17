@@ -68,6 +68,29 @@ describe("expand to serverless config", () => {
             }));
     });
 
+    describe("webhook notification", () => {
+        it("includes send to webhook function if webhook set as global notifier", async () =>
+            expect(expandToServerlessConfig({
+                checks: {},
+                notifications: [
+                    {
+                        webhook: {
+                            webhookUrl: "https://webhook.example.com/test",
+                        },
+                    },
+                ],
+            })["eu-west-1"].functions["send-to-webhook"]).toEqual({
+                handler: "node_modules/checkless/send-to-webhook.sendToWebhook",
+                memorySize: 512,
+                environment: {
+                    webhookUrl: "https://webhook.example.com/test",
+                },
+                events: [
+                    { sns: "${self:custom.checkCompleteTopic}" }, // eslint-disable-line no-template-curly-in-string
+                ],
+            }));
+    });
+
     describe("email notification", () => {
         it("Sends to mailqueue on sucess", async () =>
             expect(expandToServerlessConfig({
